@@ -10,6 +10,9 @@ const Demo = () => {
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
 
+    // Replace this URL with your Render deployment URL
+    const RENDER_API_URL = 'https://mc-backend-34nr.onrender.com';
+
     const onDrop = useCallback((acceptedFiles) => {
         setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
     }, []);
@@ -39,7 +42,7 @@ const Demo = () => {
                 files.map(async (file) => {
                     const formData = new FormData();
                     formData.append('file', file);
-                    const response = await axios.post('http://localhost:5000/predict', formData, {
+                    const response = await axios.post(RENDER_API_URL, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
                     return { name: file.name, genre: response.data.genre };
@@ -67,19 +70,19 @@ const Demo = () => {
 
     return (
         <div className="w-full md:max-w-lg lg:max-w-2xl p-6 border rounded shadow">
-             <div
-        {...getRootProps()}
-        className={`h-48 md:h-64 lg:h-64 border-2 border-dashed rounded flex items-center justify-center cursor-pointer ${
-            isDragActive ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-        }`}
-    >
-        <input {...getInputProps()} accept="audio/*" />
-        <p className="text-center text-white font-medium text-lg">
-            {isDragActive
-                ? 'Drop the audio files here...'
-                : 'Drag audio files or click to upload'}
-        </p>
-    </div>
+            <div
+                {...getRootProps()}
+                className={`h-48 md:h-64 lg:h-64 border-2 border-dashed rounded flex items-center justify-center cursor-pointer ${
+                    isDragActive ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                }`}
+            >
+                <input {...getInputProps()} accept="audio/*" />
+                <p className="text-center text-white font-medium text-lg">
+                    {isDragActive
+                        ? 'Drop the audio files here...'
+                        : 'Drag audio files or click to upload'}
+                </p>
+            </div>
 
             {files.length > 0 && (
                 <div className="mt-4">
