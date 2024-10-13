@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { useDropzone } from 'react-dropzone';
 import { X } from 'lucide-react';
@@ -8,6 +8,7 @@ const Demo = () => {
     const [predictions, setPredictions] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const fileInputRef = useRef(null);
 
     const onDrop = useCallback((acceptedFiles) => {
         setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
@@ -25,52 +26,60 @@ const Demo = () => {
     };
 
     const handleSubmit = async () => {
-        if (files.length > 0) {
-            setIsLoading(true);
-            setError(null);
+        if (files.length === 0) {
+            fileInputRef.current.click();
+            return;
+        }
 
-            try {
-                const results = await Promise.all(
-                    files.map(async (file) => {
-                        const formData = new FormData();
-                        formData.append('file', file);
-                        const response = await axios.post('http://localhost:5000/predict', formData, {
-                            headers: { 'Content-Type': 'multipart/form-data' }
-                        });
-                        return { name: file.name, genre: response.data.genre };
-                    })
-                );
+        setIsLoading(true);
+        setError(null);
 
-                const newPredictions = results.reduce((acc, result) => {
-                    acc[result.name] = result.genre;
-                    return acc;
-                }, {});
+        try {
+            const results = await Promise.all(
+                files.map(async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await axios.post('http://localhost:5000/predict', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    return { name: file.name, genre: response.data.genre };
+                })
+            );
 
-                setPredictions(newPredictions);
-            } catch (error) {
-                console.error('Error:', error);
-                setError(error.response ? error.response.data : error.message);
-            } finally {
-                setIsLoading(false);
-            }
+            const newPredictions = results.reduce((acc, result) => {
+                acc[result.name] = result.genre;
+                return acc;
+            }, {});
+
+            setPredictions(newPredictions);
+        } catch (error) {
+            console.error('Error:', error);
+            setError(error.response ? error.response.data : error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    const handleFileInputChange = (event) => {
+        const selectedFiles = Array.from(event.target.files);
+        setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+    };
+
     return (
-        <div className="w-full max-w-md p-6 border rounded shadow">
-            <div
-                {...getRootProps()}
-                className={`h-48 border-2 border-dashed rounded flex items-center justify-center cursor-pointer ${
-                    isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                }`}
-            >
-                <input {...getInputProps()} accept="audio/*" />
-                <p className="text-center">
-                    {isDragActive
-                        ? 'Drop the audio files here...'
-                        : 'Drag audio files or click to upload'}
-                </p>
-            </div>
+        <div className="w-full md:max-w-lg lg:max-w-2xl p-6 border rounded shadow">
+             <div
+        {...getRootProps()}
+        className={`h-48 md:h-64 lg:h-64 border-2 border-dashed rounded flex items-center justify-center cursor-pointer ${
+            isDragActive ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+        }`}
+    >
+        <input {...getInputProps()} accept="audio/*" />
+        <p className="text-center text-white font-medium text-lg">
+            {isDragActive
+                ? 'Drop the audio files here...'
+                : 'Drag audio files or click to upload'}
+        </p>
+    </div>
 
             {files.length > 0 && (
                 <div className="mt-4">
@@ -93,11 +102,20 @@ const Demo = () => {
 
             <button
                 onClick={handleSubmit}
-                disabled={files.length === 0 || isLoading}
-                className="mt-4 w-full p-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+                disabled={isLoading}
+                className="mt-4 w-full p-2 black_btn orange_gradient"
             >
                 {isLoading ? 'Processing...' : (files.length > 0 ? 'Predict Genres' : 'Upload audio files')}
             </button>
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                multiple
+                onChange={handleFileInputChange}
+                className="hidden"
+            />
 
             {Object.keys(predictions).length > 0 && (
                 <div className="mt-4">
