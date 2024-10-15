@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 
-const API_URL = 'https://sonataai-g44y.onrender.com';  
+const API_URL = process.env.REACT_APP_API_URL || 'https://sonataai-g44y.onrender.com';
 
 const Demo = () => {
     const [files, setFiles] = useState([]);
